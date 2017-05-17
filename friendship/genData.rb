@@ -1,4 +1,4 @@
-DATA_DIR = File.join('..', 'data')
+DATA_DIR = File.join('.', 'data')
 SIMILAR_OBS_PATH = File.join(DATA_DIR, 'similar_obs.txt')
 LOCATION_OBS_PATH = File.join(DATA_DIR, 'location_obs.txt')
 FRIENDS_OBS_PATH = File.join(DATA_DIR, 'friends_obs.txt')

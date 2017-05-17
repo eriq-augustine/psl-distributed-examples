@@ -358,8 +358,9 @@ public class Friendship {
       }
 
 		// TEST(eriq)
-		// cb.addProperty('distributedmpeinference.workers', 'sunset.soe.ucsc.edu:12345');
-		cb.addProperty('distributedmpeinference.workers', 'localhost:12345');
+		cb.addProperty('distributedmpeinference.workers', 'sunset.soe.ucsc.edu:12345');
+		// cb.addProperty('distributedmpeinference.workers', 'localhost:12345');
+		cb.addProperty('distributedmpeinference.workers', 'eriqs-shit.com:12345');
 
 		return cb;
 	}
