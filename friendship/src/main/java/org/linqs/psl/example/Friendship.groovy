@@ -30,6 +30,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import groovy.time.TimeCategory;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -44,6 +46,7 @@ public class Friendship {
    private static final String PARTITION_TRUTH = "truth";
 
    private static final String ID = "friendship";
+   private static final String DEFAULT_HOSTNAME = "unknown";
 
    private Logger log;
    private DataStore ds;
@@ -72,6 +75,8 @@ public class Friendship {
          master = cb.getBoolean('master', false);
 
          String suffix = distributed ? (master ? "master" : "worker") : "standalone";
+         suffix += "_" + getHostname();
+
          dbPath = Paths.get(cb.getString('experiment.dbpath', '/tmp'), ID + "_" + suffix);
          dataPath = cb.getString('experiment.data.path', 'data');
          outputPath = cb.getString('experiment.output.outputdir', 'output');
@@ -311,6 +316,18 @@ public class Friendship {
       }
 
       return blocks;
+   }
+
+   private String getHostname() {
+      String hostname = DEFAULT_HOSTNAME;
+
+      try {
+         hostname = InetAddress.getLocalHost().getHostName();
+      } catch (UnknownHostException ex) {
+         log.warn("Hostname can not be resolved, using '" + hostname + "'.");
+      }
+
+      return hostname;
    }
 
    public void run() {
