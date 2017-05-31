@@ -1,7 +1,7 @@
 #!/bin/bash
 
 readonly CLASSPATH_FILE='classpath.out'
-readonly TARGET_CLASS='org.linqs.psl.example.easylp.EasyLP'
+readonly TARGET_CLASS='org.linqs.psl.example.Friendship'
 
 FETCH_COMMAND=''
 
@@ -48,7 +48,7 @@ function buildClasspath() {
 }
 
 function run() {
-   java -cp ./target/classes:$(cat ${CLASSPATH_FILE}) ${TARGET_CLASS}
+   java -cp ./target/classes:$(cat ${CLASSPATH_FILE}) ${TARGET_CLASS} --worker
    if [[ "$?" -ne 0 ]]; then
       err 'Failed to run'
       exit 60
