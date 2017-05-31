@@ -65,11 +65,15 @@ public class Friendship {
 		public distributed;
 		public master;
 
+        public String runid;
+
 		public PSLConfig(ConfigBundle cb) {
 			this.cb = cb;
 
 			distributed = cb.getBoolean('distributed', false);
 			master = cb.getBoolean('master', false);
+
+            runid = cb.getString('runid', "0");
 
          String suffix = distributed ? (master ? "master" : "worker") : "standalone";
 			dbPath = Paths.get(cb.getString('experiment.dbpath', '/tmp'), ID + "_" + suffix);
@@ -212,7 +216,7 @@ public class Friendship {
 	 */
 	private void writeOutput(Partition targetsPartition) {
 		Database resultsDB = ds.getDatabase(targetsPartition);
-		PrintStream ps = new PrintStream(new File(Paths.get(config.outputPath, "friends_infer.txt").toString()));
+		PrintStream ps = new PrintStream(new File(Paths.get(config.outputPath, "friends_infer-"+config.runid+".txt").toString()));
 		AtomPrintStream aps = new DefaultAtomPrintStream(ps);
 		Set atomSet = Queries.getAllAtoms(resultsDB, Friends);
 		for (Atom a : atomSet) {
@@ -345,7 +349,9 @@ public class Friendship {
       cb.setProperty('distributed', false);
       cb.setProperty('master', false);
 
-      for (int i = 0; i < args.length; i++) {
+      cb.setProperty('runid', args[0]);
+
+      for (int i = 1; i < args.length; i++) {
          if (args[i].equals("--worker")) {
             cb.setProperty('distributed', true);
             cb.setProperty('master', false);
@@ -358,9 +364,9 @@ public class Friendship {
       }
 
 		// TEST(eriq)
-		cb.addProperty('distributedmpeinference.workers', 'sunset.soe.ucsc.edu:12345');
-		// cb.addProperty('distributedmpeinference.workers', 'localhost:12345');
-		cb.addProperty('distributedmpeinference.workers', 'eriqs-shit.com:12345');
+		//cb.addProperty('distributedmpeinference.workers', 'waterdance.soe.ucsc.edu:12345');
+		//cb.addProperty('distributedmpeinference.workers', 'slamdance.soe.ucsc.edu:12345');
+		//cb.addProperty('distributedmpeinference.workers', 'eriqs-shit.com:12345');
 
 		return cb;
 	}
