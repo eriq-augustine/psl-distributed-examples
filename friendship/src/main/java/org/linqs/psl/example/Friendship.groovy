@@ -137,9 +137,9 @@ public class Friendship {
          weight : 10
       );
 
-      // TODO(eriq): This is a problem! It will ground all, but we don't want that.
       model.add(
-         rule: "!Friends(P1, P2)",
+         // rule: "!Friends(P1, P2)",
+         rule: "Block(P1, A) & Block(P2, A) -> !Friends(P1, P2)",
          squared: config.sqPotentials,
          weight : 10
       );
