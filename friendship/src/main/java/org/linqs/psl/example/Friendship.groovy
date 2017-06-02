@@ -137,12 +137,9 @@ public class Friendship {
          weight : 10
       );
 
-      // Priors
-
+      // Prior (only deal with values in the same block).
       model.add(
-         // rule: "!Friends(P1, P2)",
-         // rule: "Block(P1, A) & Block(P2, A) -> !Friends(P1, P2)",
-         rule: "Block(P1, A) & Block(P2, B) -> !Friends(P1, P2)",
+         rule: "Block(P1, A) & Block(P2, A) -> !Friends(P1, P2)",
          squared: config.sqPotentials,
          weight : 1
       );
@@ -165,13 +162,8 @@ public class Friendship {
       Inserter inserter = ds.getInserter(Similar, obsPartition);
       InserterUtils.loadDelimitedDataTruth(inserter, Paths.get(config.dataPath, "similar_obs.txt").toString());
 
-      /*
-      inserter = ds.getInserter(Friends, obsPartition);
-      InserterUtils.loadDelimitedData(inserter, Paths.get(config.dataPath, "friends_obs.txt").toString());
-      */
-
       inserter = ds.getInserter(Friends, targetsPartition);
-      InserterUtils.loadDelimitedData(inserter, Paths.get(config.dataPath, "friends_targets.txt").toString());
+      InserterUtils.loadDelimitedDataTruth(inserter, Paths.get(config.dataPath, "friends_targets.txt").toString());
 
       inserter = ds.getInserter(Friends, truthPartition);
       InserterUtils.loadDelimitedDataTruth(inserter, Paths.get(config.dataPath, "friends_truth.txt").toString());

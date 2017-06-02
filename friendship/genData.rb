@@ -98,7 +98,8 @@ def writeData(locations, similarity, friendship)
    }
 
    File.open(FRIENDS_TARGET_PATH, 'w'){|file|
-      file.puts(friendship.map{|entry| entry[0...2].join("\t")}.join("\n"))
+      # Make sure to add on the zero for the initial value.
+      file.puts(friendship.map{|entry| (entry[0...2].push(0)).join("\t")}.join("\n"))
    }
 end
 
