@@ -137,11 +137,14 @@ public class Friendship {
          weight : 10
       );
 
+      // Priors
+
       model.add(
          // rule: "!Friends(P1, P2)",
-         rule: "Block(P1, A) & Block(P2, A) -> !Friends(P1, P2)",
+         // rule: "Block(P1, A) & Block(P2, A) -> !Friends(P1, P2)",
+         rule: "Block(P1, A) & Block(P2, B) -> !Friends(P1, P2)",
          squared: config.sqPotentials,
-         weight : 10
+         weight : 1
       );
 
       log.debug("model: {}", model);
