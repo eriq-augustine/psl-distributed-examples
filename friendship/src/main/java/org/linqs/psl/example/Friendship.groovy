@@ -22,9 +22,8 @@ import org.linqs.psl.model.term.ConstantType;
 import org.linqs.psl.utils.dataloading.InserterUtils;
 import org.linqs.psl.utils.evaluation.printing.AtomPrintStream;
 import org.linqs.psl.utils.evaluation.printing.DefaultAtomPrintStream;
-import org.linqs.psl.utils.evaluation.statistics.ContinuousPredictionComparator;
-import org.linqs.psl.utils.evaluation.statistics.DiscretePredictionComparator;
-import org.linqs.psl.utils.evaluation.statistics.DiscretePredictionStatistics;
+import org.linqs.psl.utils.evaluation.statistics.QuickPredictionComparator;
+import org.linqs.psl.utils.evaluation.statistics.QuickPredictionStatistics;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -232,29 +231,27 @@ public class Friendship {
 	 * Run statistical evaluation scripts to determine the quality of the inferences
 	 * relative to the defined truth.
 	 */
-	private void evalResults(Partition targetsPartition, Partition truthPartition) {
-		Database resultsDB = ds.getDatabase(targetsPartition, [Friends] as Set);
-		Database truthDB = ds.getDatabase(truthPartition, [Friends] as Set);
-		DiscretePredictionComparator dpc = new DiscretePredictionComparator(resultsDB);
-		ContinuousPredictionComparator cpc = new ContinuousPredictionComparator(resultsDB);
-		dpc.setBaseline(truthDB);
-		//	 dpc.setThreshold(0.99);
-		cpc.setBaseline(truthDB);
-		DiscretePredictionStatistics stats = dpc.compare(Friends);
-		double mse = cpc.compare(Friends);
-		log.info("MSE: {}", mse);
-		log.info("Accuracy {}, Error {}",stats.getAccuracy(), stats.getError());
-		log.info(
-				"Positive Class: precision {}, recall {}",
-				stats.getPrecision(DiscretePredictionStatistics.BinaryClass.POSITIVE),
-				stats.getRecall(DiscretePredictionStatistics.BinaryClass.POSITIVE));
-		log.info("Negative Class Stats: precision {}, recall {}",
-				stats.getPrecision(DiscretePredictionStatistics.BinaryClass.NEGATIVE),
-				stats.getRecall(DiscretePredictionStatistics.BinaryClass.NEGATIVE));
+   private void evalResults(Partition targetsPartition, Partition truthPartition) {
+      Database resultsDB = ds.getDatabase(targetsPartition, [Friends] as Set);
+      Database truthDB = ds.getDatabase(truthPartition, [Friends] as Set);
+      //DiscretePredictionComparator dpc = new DiscretePredictionComparator(resultsDB);
+      //ContinuousPredictionComparator cpc = new ContinuousPredictionComparator(resultsDB);
+      QuickPredictionComparator qpc = new QuickPredictionComparator(resultsDB);
+      qpc.setBaseline(truthDB);
+      QuickPredictionStatistics stats = qpc.compare(Friends);
+      log.info("MSE: {}", stats.getContinuousMetricScore());
+      log.info("Accuracy {}, Error {}",stats.getAccuracy(), stats.getError());
+      log.info(
+            "Positive Class: precision {}, recall {}",
+            stats.getPrecision(QuickPredictionStatistics.BinaryClass.POSITIVE),
+            stats.getRecall(QuickPredictionStatistics.BinaryClass.POSITIVE));
+      log.info("Negative Class Stats: precision {}, recall {}",
+            stats.getPrecision(QuickPredictionStatistics.BinaryClass.NEGATIVE),
+            stats.getRecall(QuickPredictionStatistics.BinaryClass.NEGATIVE));
 
-		resultsDB.close();
-		truthDB.close();
-	}
+      resultsDB.close();
+      truthDB.close();
+   }
 
    /**
     * Take the blocks and assign them to workers.

@@ -22,9 +22,8 @@ import org.linqs.psl.model.term.ConstantType;
 import org.linqs.psl.utils.dataloading.InserterUtils;
 import org.linqs.psl.utils.evaluation.printing.AtomPrintStream;
 import org.linqs.psl.utils.evaluation.printing.DefaultAtomPrintStream;
-import org.linqs.psl.utils.evaluation.statistics.ContinuousPredictionComparator;
-import org.linqs.psl.utils.evaluation.statistics.DiscretePredictionComparator;
-import org.linqs.psl.utils.evaluation.statistics.DiscretePredictionStatistics;
+import org.linqs.psl.utils.evaluation.statistics.QuickPredictionComparator;
+import org.linqs.psl.utils.evaluation.statistics.QuickPredictionStatistics;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -65,6 +64,8 @@ public class BibliographyERCora  {
 		public distributed;
 		public master;
 
+        public String runid;
+
 		public Map weightMap = [
 			"SimilarTitles":40,
 			"SimilarNames":40,
@@ -90,6 +91,8 @@ public class BibliographyERCora  {
 
          sqPotentials = true;
 
+            this.runid = cb.getString('runid','0');
+
 			this.weightMap["SimilarTitles"] = cb.getInteger('model.weights.similarTitles', weightMap["SimilarTitles"]);
 			this.weightMap["SimilarName"] = cb.getInteger('model.weights.similarNames', weightMap["SimilarNames"]);
 			this.weightMap["NotSimilarAuthors"] = cb.getInteger('model.weights.notSimilarAuthors', weightMap["NotSimilarAuthors"]);
@@ -100,6 +103,7 @@ public class BibliographyERCora  {
 			this.weightMap["Prior"] = cb.getInteger('model.weights.prior', weightMap["Prior"]);
 			this.useTransitivityRule = cb.getBoolean('model.rule.transitivity', false);
 		}
+
 	}
 
 	public BibliographyERCora(ConfigBundle cb) {
@@ -201,14 +205,16 @@ public class BibliographyERCora  {
 	private void loadData(Partition obsPartition, Partition targetsPartition, Partition truthPartition) {
 		log.info("Loading data into database");
 
-		Inserter inserter = ds.getInserter(BlocksAuthors, obsPartition);
-		InserterUtils.loadDelimitedData(inserter, Paths.get(config.dataPath, "BlocksAuthors.txt").toString());
+		Inserter inserter = ds.getInserter(HaveSimilarTitles, obsPartition);
+		InserterUtils.loadDelimitedDataTruth(inserter, Paths.get(config.dataPath, "HaveSimilarTitles.txt").toString());
+
+        if (!config.distributed){
+    		inserter = ds.getInserter(BlocksAuthors, obsPartition);
+	    	InserterUtils.loadDelimitedData(inserter, Paths.get(config.dataPath, "BlocksAuthors.txt").toString());
+        }
 
 		inserter = ds.getInserter(BlocksPubs, obsPartition);
 		InserterUtils.loadDelimitedData(inserter, Paths.get(config.dataPath, "BlocksPubs.txt").toString());
-
-		inserter = ds.getInserter(HaveSimilarTitles, obsPartition);
-		InserterUtils.loadDelimitedDataTruth(inserter, Paths.get(config.dataPath, "HaveSimilarTitles.txt").toString());
 
 		inserter = ds.getInserter(HaveSimilarNames, obsPartition);
 		InserterUtils.loadDelimitedDataTruth(inserter, Paths.get(config.dataPath, "HaveSimilarNames.txt").toString());
@@ -273,7 +279,7 @@ public class BibliographyERCora  {
 	 */
 	private void writeOutput(Partition targetsPartition) {
 		Database resultsDB = ds.getDatabase(targetsPartition);
-		PrintStream ps = new PrintStream(new File(Paths.get(config.outputPath, "same_infer.txt").toString()));
+		PrintStream ps = new PrintStream(new File(Paths.get(config.outputPath, "same_infer-"+config.runid+".txt").toString()));
 		AtomPrintStream aps = new DefaultAtomPrintStream(ps);
 		Set atomSet = Queries.getAllAtoms(resultsDB,SamePub);
 		for (Atom a : atomSet) {
@@ -296,13 +302,28 @@ public class BibliographyERCora  {
 	private void evalResults(Partition targetsPartition, Partition truthPartition) {
 		Database resultsDB = ds.getDatabase(targetsPartition, [SamePub,SameAuthor] as Set);
 		Database truthDB = ds.getDatabase(truthPartition, [SamePub,SameAuthor] as Set);
+
 		DiscretePredictionComparator dpc = new DiscretePredictionComparator(resultsDB);
 		ContinuousPredictionComparator cpc = new ContinuousPredictionComparator(resultsDB);
 		dpc.setBaseline(truthDB);
-		//	 dpc.setThreshold(0.99);
 		cpc.setBaseline(truthDB);
-		DiscretePredictionStatistics stats = dpc.compare(Friends);
-		double mse = cpc.compare(Friends);
+
+        //Compare for author
+		DiscretePredictionStatistics stats = dpc.compare(SameAuthor);
+		double mse = cpc.compare(SameAuthor);
+		log.info("MSE: {}", mse);
+		log.info("Accuracy {}, Error {}",stats.getAccuracy(), stats.getError());
+		log.info(
+				"Positive Class: precision {}, recall {}",
+				stats.getPrecision(DiscretePredictionStatistics.BinaryClass.POSITIVE),
+				stats.getRecall(DiscretePredictionStatistics.BinaryClass.POSITIVE));
+		log.info("Negative Class Stats: precision {}, recall {}",
+				stats.getPrecision(DiscretePredictionStatistics.BinaryClass.NEGATIVE),
+				stats.getRecall(DiscretePredictionStatistics.BinaryClass.NEGATIVE));
+
+        //Compare for publications
+		stats = dpc.compare(SamePub);
+		mse = cpc.compare(SamePub);
 		log.info("MSE: {}", mse);
 		log.info("Accuracy {}, Error {}",stats.getAccuracy(), stats.getError());
 		log.info(
@@ -362,7 +383,7 @@ public class BibliographyERCora  {
 
    // Just block by location.
    private Map<String, List<String>> computeBlocks() {
-      List<String> lines = Files.readAllLines(Paths.get(config.dataPath, "location_obs.txt"), Charset.defaultCharset());
+      List<String> lines = Files.readAllLines(Paths.get(config.dataPath, "BlocksAuthors.txt"), Charset.defaultCharset());
 
       Map<String, List<String>> blocks = new HashMap<String, List<String>>();
       for (String line : lines) {
@@ -410,7 +431,9 @@ public class BibliographyERCora  {
       cb.setProperty('distributed', false);
       cb.setProperty('master', false);
 
-      for (int i = 0; i < args.length; i++) {
+      cb.setProperty('runid', args[0]);
+
+      for (int i = 1; i < args.length; i++) {
          if (args[i].equals("--worker")) {
             cb.setProperty('distributed', true);
             cb.setProperty('master', false);
@@ -424,8 +447,8 @@ public class BibliographyERCora  {
       }
 
 		// TEST(eriq)
-		cb.addProperty('distributedmpeinference.workers', 'slamdance.soe.ucsc.edu:12345');
-		cb.addProperty('distributedmpeinference.workers', 'udance.soe.ucsc.edu:12345');
+		cb.addProperty('distributedmpeinference.workers', 'sozopol.soe.ucsc.edu:12345');
+		cb.addProperty('distributedmpeinference.workers', 'kaanapali.soe.ucsc.edu:12345');
 		//cb.addProperty('distributedmpeinference.workers', 'eriqs-shit.com:12345');
 
 		return cb;
