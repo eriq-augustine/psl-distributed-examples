@@ -1,4 +1,4 @@
-package org.linqs.psl.BibliographyER;
+package org.linqs.psl.distributed.bibliographicER;
 
 import org.linqs.psl.application.inference.MPEInference;
 import org.linqs.psl.application.inference.distributed.DistributedMPEInferenceMaster;
@@ -37,7 +37,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class BibliographyERCora  {
+public class CoraUWash  {
 	private static final String PARTITION_OBSERVATIONS = "observations";
 	private static final String PARTITION_TARGETS = "targets";
 	private static final String PARTITION_TRUTH = "truth";
@@ -64,7 +64,7 @@ public class BibliographyERCora  {
 		public distributed;
 		public master;
 
-        public String runid;
+		public String runid;
 
 		public Map weightMap = [
 			"SimilarTitles":40,
@@ -84,29 +84,29 @@ public class BibliographyERCora  {
 			distributed = cb.getBoolean('distributed', false);
 			master = cb.getBoolean('master', false);
 
-         String suffix = distributed ? (master ? "master" : "worker") : "standalone";
+			String suffix = distributed ? (master ? "master" : "worker") : "standalone";
 			dbPath = Paths.get(cb.getString('experiment.dbpath', '/tmp'), ID + "_" + suffix);
 			dataPath = cb.getString('experiment.data.path', 'data');
 			outputPath = cb.getString('experiment.output.outputdir', 'output');
 
-         sqPotentials = true;
+			runid = cb.getString('runid','0');
 
-            this.runid = cb.getString('runid','0');
+			weightMap["SimilarTitles"] = cb.getInteger('model.weights.similarTitles', weightMap["SimilarTitles"]);
+			weightMap["SimilarName"] = cb.getInteger('model.weights.similarNames', weightMap["SimilarNames"]);
+			weightMap["NotSimilarAuthors"] = cb.getInteger('model.weights.notSimilarAuthors', weightMap["NotSimilarAuthors"]);
+			weightMap["SamePubSameAuthor"] = cb.getInteger('model.weights.SamePubSameAuthor', weightMap["SamePubSameAuthor"]);
+			weightMap["NotSameCoAuthor"] = cb.getInteger('model.weights.notSameCoAuthor', weightMap["NotSameCoAuthor"]);
+			weightMap["Transitivity"] = cb.getInteger('model.weights.transitivity', weightMap["Transitivity"]);
+			weightMap["Co-occurrence"] = cb.getInteger('model.weights.cooccurrence', weightMap["Co-occurrence"]);
+			weightMap["Prior"] = cb.getInteger('model.weights.prior', weightMap["Prior"]);
+			useTransitivityRule = cb.getBoolean('model.rule.transitivity', false);
 
-			this.weightMap["SimilarTitles"] = cb.getInteger('model.weights.similarTitles', weightMap["SimilarTitles"]);
-			this.weightMap["SimilarName"] = cb.getInteger('model.weights.similarNames', weightMap["SimilarNames"]);
-			this.weightMap["NotSimilarAuthors"] = cb.getInteger('model.weights.notSimilarAuthors', weightMap["NotSimilarAuthors"]);
-			this.weightMap["SamePubSameAuthor"] = cb.getInteger('model.weights.SamePubSameAuthor', weightMap["SamePubSameAuthor"]);
-			this.weightMap["NotSameCoAuthor"] = cb.getInteger('model.weights.notSameCoAuthor', weightMap["NotSameCoAuthor"]);
-			this.weightMap["Transitivity"] = cb.getInteger('model.weights.transitivity', weightMap["Transitivity"]);
-			this.weightMap["Co-occurrence"] = cb.getInteger('model.weights.cooccurrence', weightMap["Co-occurrence"]);
-			this.weightMap["Prior"] = cb.getInteger('model.weights.prior', weightMap["Prior"]);
-			this.useTransitivityRule = cb.getBoolean('model.rule.transitivity', false);
+			sqPotentials = true;
 		}
 
 	}
 
-	public BibliographyERCora(ConfigBundle cb) {
+	public CoraUWash(ConfigBundle cb) {
 		log = LoggerFactory.getLogger(this.class);
 		config = new PSLConfig(cb);
 		ds = new RDBMSDataStore(new H2DatabaseDriver(Type.Disk, Paths.get(config.dbPath, ID).toString(), true), cb);
@@ -165,17 +165,17 @@ public class BibliographyERCora  {
 		);
 
 		if (config.useTransitivityRule) {
-            model.add(
-                rule: ( SamePub(P1,P2) & SamePub(P2,P3) & (P1-P3) & BlocksPubs(P1,B) & BlocksPubs(P2,B) & BlocksPubs(P3,B)) >> SamePub(P1,P3),
-                squared: config.sqPotentials,
-                weight : config.weightMap["Transitivity"]
-            );
+			model.add(
+				rule: ( SamePub(P1,P2) & SamePub(P2,P3) & (P1-P3) & BlocksPubs(P1,B) & BlocksPubs(P2,B) & BlocksPubs(P3,B)) >> SamePub(P1,P3),
+				squared: config.sqPotentials,
+				weight : config.weightMap["Transitivity"]
+			);
 
-            model.add(
-                rule: ( SameAuthor(A1,A2) & SameAuthor(A2,A3) & (A1-A3) & BlocksAuthors(A1,B) & BlocksAuthors(A2,B) & BlocksAuthors(A3,B)) >> SameAuthor(A1,A3),
-                squared: config.sqPotentials,
-                weight : config.weightMap["Transitivity"]
-            );
+			model.add(
+				rule: ( SameAuthor(A1,A2) & SameAuthor(A2,A3) & (A1-A3) & BlocksAuthors(A1,B) & BlocksAuthors(A2,B) & BlocksAuthors(A3,B)) >> SameAuthor(A1,A3),
+				squared: config.sqPotentials,
+				weight : config.weightMap["Transitivity"]
+			);
 		}
 
 		model.add(
@@ -303,36 +303,34 @@ public class BibliographyERCora  {
 		Database resultsDB = ds.getDatabase(targetsPartition, [SamePub,SameAuthor] as Set);
 		Database truthDB = ds.getDatabase(truthPartition, [SamePub,SameAuthor] as Set);
 
-		DiscretePredictionComparator dpc = new DiscretePredictionComparator(resultsDB);
-		ContinuousPredictionComparator cpc = new ContinuousPredictionComparator(resultsDB);
-		dpc.setBaseline(truthDB);
-		cpc.setBaseline(truthDB);
+		QuickPredictionComparator qpc = new QuickPredictionComparator(resultsDB);
+		qpc.setBaseline(truthDB);
 
         //Compare for author
-		DiscretePredictionStatistics stats = dpc.compare(SameAuthor);
-		double mse = cpc.compare(SameAuthor);
-		log.info("MSE: {}", mse);
+		QuickPredictionStatistics stats = qpc.compare(SameAuthor);
+        log.info("Stats for Author");
+		log.info("MSE: {}", stats.getContinuousMetricScore());
 		log.info("Accuracy {}, Error {}",stats.getAccuracy(), stats.getError());
 		log.info(
 				"Positive Class: precision {}, recall {}",
-				stats.getPrecision(DiscretePredictionStatistics.BinaryClass.POSITIVE),
-				stats.getRecall(DiscretePredictionStatistics.BinaryClass.POSITIVE));
+				stats.getPrecision(QuickPredictionStatistics.BinaryClass.POSITIVE),
+				stats.getRecall(QuickPredictionStatistics.BinaryClass.POSITIVE));
 		log.info("Negative Class Stats: precision {}, recall {}",
-				stats.getPrecision(DiscretePredictionStatistics.BinaryClass.NEGATIVE),
-				stats.getRecall(DiscretePredictionStatistics.BinaryClass.NEGATIVE));
+				stats.getPrecision(QuickPredictionStatistics.BinaryClass.NEGATIVE),
+				stats.getRecall(QuickPredictionStatistics.BinaryClass.NEGATIVE));
 
         //Compare for publications
-		stats = dpc.compare(SamePub);
-		mse = cpc.compare(SamePub);
-		log.info("MSE: {}", mse);
+		stats = qpc.compare(SamePub);
+        log.info("Stats for Publications");
+		log.info("MSE: {}", stats.getContinuousMetricScore());
 		log.info("Accuracy {}, Error {}",stats.getAccuracy(), stats.getError());
 		log.info(
 				"Positive Class: precision {}, recall {}",
-				stats.getPrecision(DiscretePredictionStatistics.BinaryClass.POSITIVE),
-				stats.getRecall(DiscretePredictionStatistics.BinaryClass.POSITIVE));
+				stats.getPrecision(QuickPredictionStatistics.BinaryClass.POSITIVE),
+				stats.getRecall(QuickPredictionStatistics.BinaryClass.POSITIVE));
 		log.info("Negative Class Stats: precision {}, recall {}",
-				stats.getPrecision(DiscretePredictionStatistics.BinaryClass.NEGATIVE),
-				stats.getRecall(DiscretePredictionStatistics.BinaryClass.NEGATIVE));
+				stats.getPrecision(QuickPredictionStatistics.BinaryClass.NEGATIVE),
+				stats.getRecall(QuickPredictionStatistics.BinaryClass.NEGATIVE));
 
 		resultsDB.close();
 		truthDB.close();
@@ -428,28 +426,24 @@ public class BibliographyERCora  {
 	public static ConfigBundle populateConfigBundle(String[] args) {
 		ConfigBundle cb = ConfigManager.getManager().getBundle(ID);
 
-      cb.setProperty('distributed', false);
-      cb.setProperty('master', false);
+		int argsOffset = 0;
+		if (args[0].equals("--worker")) {
+			cb.setProperty('distributed', true);
+			cb.setProperty('master', false);
+			argsOffset = 1;
+		} else if (args[0].equals("--master")) {
+			cb.setProperty('distributed', true);
+			cb.setProperty('master', true);
+			argsOffset = 1;
+		} else if (args[0].startsWith("--runid=")) {
+			cb.setProperty('distributed', false);
+			cb.setProperty('master', false);
+		}
+		else {
+			throw new RuntimeException("Unknown argument: [" + args[0] + "]");
+		}
 
-      cb.setProperty('runid', args[0]);
-
-      for (int i = 1; i < args.length; i++) {
-         if (args[i].equals("--worker")) {
-            cb.setProperty('distributed', true);
-            cb.setProperty('master', false);
-            System.out.println("Starting as worker");
-         } else if (args[i].equals("--master")) {
-            cb.setProperty('distributed', true);
-            cb.setProperty('master', true);
-         } else {
-            throw new RuntimeException("Unknown argument: [" + args[i] + "]");
-         }
-      }
-
-		// TEST(eriq)
-		cb.addProperty('distributedmpeinference.workers', 'sozopol.soe.ucsc.edu:12345');
-		cb.addProperty('distributedmpeinference.workers', 'kaanapali.soe.ucsc.edu:12345');
-		//cb.addProperty('distributedmpeinference.workers', 'eriqs-shit.com:12345');
+		cb.setProperty('experiment.runid', args[argsOffset + 0].substring("--runid=".length()));
 
 		return cb;
 	}
@@ -460,7 +454,7 @@ public class BibliographyERCora  {
 	 */
 	public static void main(String[] args) {
 		ConfigBundle configBundle = populateConfigBundle(args);
-		BibliographyERCora lp = new BibliographyERCora(configBundle);
-		lp.run();
+		CoraUWash er = new CoraUWash(configBundle);
+		er.run();
 	}
 }

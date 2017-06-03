@@ -1,7 +1,7 @@
 #!/bin/bash
 
 readonly CLASSPATH_FILE='classpath.out'
-readonly TARGET_CLASS='org.linqs.psl.distrBibER.DistBibERDBLPACM'
+readonly TARGET_CLASS='org.linqs.psl.distributed.bibliographicER.DBLPACM'
 
 FETCH_COMMAND=''
 
@@ -23,6 +23,25 @@ function check_requirements() {
    if [[ "$?" -ne 0 ]]; then
       err 'java required to run project'
       exit 13
+   fi
+}
+
+function check_arguments() {
+   if [[ $# -ne 2 ]]; then
+      echo ""
+      err '--runid=RUNID and SIMTYPE are required arguments'
+      echo ""
+      cat usage.txt
+      echo ""
+      exit 70
+   fi
+   if [[ $1 != --runid=* ]]; then
+      echo ""
+      err 'First argument must have the form --runid=RUNID'
+      echo ""
+      cat usage.txt
+      echo ""
+      exit 80
    fi
 }
 
@@ -49,7 +68,6 @@ function buildClasspath() {
 
 function run() {
    echo "$@"
-   #java -Xmx110G -Xms50G -cp ./target/classes:$(cat ${CLASSPATH_FILE}) ${TARGET_CLASS} "$@"
    java -cp ./target/classes:$(cat ${CLASSPATH_FILE}) ${TARGET_CLASS} "$@"
    if [[ "$?" -ne 0 ]]; then
       err 'Failed to run'
@@ -59,9 +77,10 @@ function run() {
 
 function main() {
    check_requirements
+   check_arguments "$@"
    compile
    buildClasspath
-   run "$@"
+   run $1 data Similarities.$2.combo-only same_targets.txt same_truth.txt
 }
 
 main "$@"

@@ -360,11 +360,6 @@ public class Friendship {
          }
       }
 
-		// TEST(eriq)
-		//cb.addProperty('distributedmpeinference.workers', 'waterdance.soe.ucsc.edu:12345');
-		//cb.addProperty('distributedmpeinference.workers', 'slamdance.soe.ucsc.edu:12345');
-		//cb.addProperty('distributedmpeinference.workers', 'eriqs-shit.com:12345');
-
 		return cb;
 	}
 

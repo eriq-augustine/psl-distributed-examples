@@ -1,4 +1,4 @@
-package org.linqs.psl.distrBibER;
+package org.linqs.psl.distributed.bibliographicER;
 
 import org.linqs.psl.application.inference.MPEInference;
 import org.linqs.psl.application.inference.distributed.DistributedMPEInferenceMaster;
@@ -37,12 +37,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class DistBibERDBLPACM {
+public class DBLPACM {
 	private static final String PARTITION_OBSERVATIONS = "observations";
 	private static final String PARTITION_TARGETS = "targets";
 	private static final String PARTITION_TRUTH = "truth";
 
-   private static final String ID = "dblpacm";
+	private static final String ID = "dblpacm";
 
 	private Logger log;
 	private DataStore ds;
@@ -61,20 +61,21 @@ public class DistBibERDBLPACM {
 
 		public boolean sqPotentials;
 
-		public distributed;
-		public master;
+		public boolean distributed;
+		public boolean master;
 
 		public String experimentName;
-        public String simPath;
-        public String targetsPath;
-        public String truthPath;
-        public String runid;
+		public String simPath;
+		public String targetsPath;
+		public String truthPath;
+		public String runid;
 
 		public Map weightMap = [
 			"Similar":20,
 			"Transitivity":20,
 			"Prior":1
 		];
+
 		public boolean useTransitivityRule = false;
 
 		public PSLConfig(ConfigBundle cb) {
@@ -83,27 +84,27 @@ public class DistBibERDBLPACM {
 			distributed = cb.getBoolean('distributed', false);
 			master = cb.getBoolean('master', false);
 
-         String suffix = distributed ? (master ? "master" : "worker") : "standalone";
+			String suffix = distributed ? (master ? "master" : "worker") : "standalone";
 			dbPath = Paths.get(cb.getString('experiment.dbpath', '/tmp'), ID + "_" + suffix);
 			dataPath = cb.getString('experiment.data.path', 'data');
 			outputPath = cb.getString('experiment.output.outputdir', 'output');
 
-			this.experimentName = cb.getString('experiment.name', 'default');
-            this.simPath = cb.getString('experiment.similarity.path', 'something');
-            this.targetsPath = cb.getString('experiment.targets.path', 'something');
-            this.truthPath = cb.getString('experiment.truth.path','something');
-			this.runid = cb.getString('experiment.runid', 'something');
+			experimentName = cb.getString('experiment.name', 'default');
+            simPath = cb.getString('experiment.similarity.path', 'something');
+            targetsPath = cb.getString('experiment.targets.path', 'something');
+            truthPath = cb.getString('experiment.truth.path','something');
+			runid = cb.getString('experiment.runid', 'something');
 
-			this.weightMap["Similar"] = cb.getInteger('model.weights.similar', weightMap["Similar"]);
-			this.weightMap["Transitivity"] = cb.getInteger('model.weights.transitivity', weightMap["Transitivity"]);
-			this.weightMap["Prior"] = cb.getInteger('model.weights.prior', weightMap["Prior"]);
-			this.useTransitivityRule = cb.getBoolean('model.rule.transitivity', false);
+			weightMap["Similar"] = cb.getInteger('model.weights.similar', weightMap["Similar"]);
+			weightMap["Transitivity"] = cb.getInteger('model.weights.transitivity', weightMap["Transitivity"]);
+			weightMap["Prior"] = cb.getInteger('model.weights.prior', weightMap["Prior"]);
+			useTransitivityRule = cb.getBoolean('model.rule.transitivity', false);
 
-         sqPotentials = true;
+			sqPotentials = true;
 		}
 	}
 
-	public DistBibERDBLPACM(ConfigBundle cb) {
+	public DBLPACM(ConfigBundle cb) {
 		log = LoggerFactory.getLogger(this.class);
 		config = new PSLConfig(cb);
 		ds = new RDBMSDataStore(new H2DatabaseDriver(Type.Disk, Paths.get(config.dbPath, ID).toString(), true), cb);
@@ -114,8 +115,8 @@ public class DistBibERDBLPACM {
 	 * Defines the logical predicates used in this model
 	 */
 	private void definePredicates() {
-        model.add predicate: "Block", types: [ConstantType.UniqueID, ConstantType.UniqueID];
-        model.add predicate: "DB", types: [ConstantType.UniqueID, ConstantType.UniqueID];
+		model.add predicate: "Block", types: [ConstantType.UniqueID, ConstantType.UniqueID];
+		model.add predicate: "DB", types: [ConstantType.UniqueID, ConstantType.UniqueID];
 		model.add predicate: "Similar", types: [ConstantType.UniqueID, ConstantType.UniqueID];
 		model.add predicate: "Same", types: [ConstantType.UniqueID, ConstantType.UniqueID];
 	}
@@ -133,11 +134,11 @@ public class DistBibERDBLPACM {
 		);
 
 		if (config.useTransitivityRule) {
-            model.add(
-                rule: ( Same(P1,P2) & Same(P2,P3) & (P1-P3) & Block(P1,B) & Block(P2,B) & Block(P3,B)) >> Same(P1,P3),
-                squared: config.sqPotentials,
-                weight : config.weightMap["Transitivity"]
-            );
+			model.add(
+				rule: ( Same(P1,P2) & Same(P2,P3) & (P1-P3) & Block(P1,B) & Block(P2,B) & Block(P3,B)) >> Same(P1,P3),
+				squared: config.sqPotentials,
+				weight : config.weightMap["Transitivity"]
+			);
 		}
 
 		model.add(
@@ -164,10 +165,10 @@ public class DistBibERDBLPACM {
 		Inserter inserter = ds.getInserter(Similar, obsPartition);
 		InserterUtils.loadDelimitedDataTruth(inserter, Paths.get(config.dataPath, config.simPath).toString());
 
-        if (!config.distributed) {
-		    inserter = ds.getInserter(Block, obsPartition);
-    		InserterUtils.loadDelimitedData(inserter, Paths.get(config.dataPath, "Blocks.txt").toString());
-        }
+		if (!config.distributed) {
+			inserter = ds.getInserter(Block, obsPartition);
+			InserterUtils.loadDelimitedData(inserter, Paths.get(config.dataPath, "Blocks.txt").toString());
+		}
 
 		inserter = ds.getInserter(DB, obsPartition);
 		InserterUtils.loadDelimitedData(inserter, Paths.get(config.dataPath, "DB.txt").toString());
@@ -345,33 +346,32 @@ public class DistBibERDBLPACM {
 	public static ConfigBundle populateConfigBundle(String[] args) {
 		ConfigBundle cb = ConfigManager.getManager().getBundle(ID);
 
-      cb.setProperty('distributed', false);
-      cb.setProperty('master', false);
-        cb.setProperty('experiment.data.path', args[0]);
-        cb.setProperty('experiment.similarity.path', args[1]);
-        cb.setProperty('experiment.targets.path', args[2]);
-        cb.setProperty('experiment.truth.path', args[3]);
-        cb.setProperty('experiment.runid', args[4]);
+		int argsOffset = 0;
+		if (args[0].equals("--worker")) {
+			cb.setProperty('distributed', true);
+			cb.setProperty('master', false);
+			argsOffset = 1;
+		} else if (args[0].equals("--master")) {
+			cb.setProperty('distributed', true);
+			cb.setProperty('master', true);
+			argsOffset = 1;
+		} else if (args[0].startsWith("--runid=")) {
+			cb.setProperty('distributed', false);
+			cb.setProperty('master', false);
+		}
+		else {
+			throw new RuntimeException("Unknown argument: [" + args[0] + "]");
+		}
 
-      for (int i = 5; i < args.length; i++) {
-         if (args[i].equals("--worker")) {
-            cb.setProperty('distributed', true);
-            cb.setProperty('master', false);
-         } else if (args[i].equals("--master")) {
-            cb.setProperty('distributed', true);
-            cb.setProperty('master', true);
-         } else {
-            throw new RuntimeException("Unknown argument: [" + args[i] + "]");
-         }
-      }
-
-		// TEST(eriq)
-		//cb.addProperty('distributedmpeinference.workers', 'waterdance.soe.ucsc.edu:12345');
-		//cb.addProperty('distributedmpeinference.workers', 'slamdance.soe.ucsc.edu:12345');
-		//cb.addProperty('distributedmpeinference.workers', 'eriqs-shit.com:12345');
+		cb.setProperty('experiment.runid', args[argsOffset + 0].substring("--runid=".length()));
+		cb.setProperty('experiment.data.path', args[argsOffset + 1]);
+		cb.setProperty('experiment.similarity.path', args[argsOffset + 2]);
+		cb.setProperty('experiment.targets.path', args[argsOffset + 3]);
+		cb.setProperty('experiment.truth.path', args[argsOffset + 4]);
 
 		return cb;
 	}
+
 
 	/**
 	 * Run this model from the command line
@@ -379,7 +379,7 @@ public class DistBibERDBLPACM {
 	 */
 	public static void main(String[] args) {
 		ConfigBundle configBundle = populateConfigBundle(args);
-		DistBibERDBLPACM er = new DistBibERDBLPACM(configBundle);
+		DBLPACM er = new DBLPACM(configBundle);
 		er.run();
 	}
 }
