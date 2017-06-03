@@ -1,5 +1,5 @@
 Usage:
-	run-[worker|master|standalone].sh --runid=[RUNID]
+	./run-[worker|master|standalone].sh --runid=[RUNID]
 
 RUNID can be any string or integer. It will be suffixed to the inference file name.
 
@@ -8,5 +8,5 @@ run-standalone.sh --runid=12
 run-worker.sh --runid=dontcare
 run-master.sh --runid=dontcare
 run-standalone.sh --runid=13 | tee -a logs/Expt13-SingleCoraUWash.log
-run-worker.sh --runid=13 2>&1 | tee -a logs/Expt13-SingleCoraUWash-worker.sozopol.log
-run-master.sh --runid=13 2>&1 | tee -a logs/Expt13-SingleCoraUWash.master.davenport.log
+run-worker.sh --runid=13 2>&1 | tee -a logs/Expt13-DistCoraUWash.worker.sozopol.log
+run-master.sh --runid=13 2>&1 | tee -a logs/Expt13-DistCoraUWash.master.davenport.log

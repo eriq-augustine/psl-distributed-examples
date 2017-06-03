@@ -1,5 +1,5 @@
 Usage:
-	run-[worker|master|standalone].sh --runid=[RUNID] SIMTYPE
+	./run-[worker|master|standalone].sh --runid=[RUNID] SIMTYPE
 
 RUNID can be any string or integer. It will be suffixed to the inference file name.
 SIMTYPE must be either JWTFIDF or L2JW
@@ -9,5 +9,5 @@ run-standalone.sh --runid=dontcare JWTFIDF
 run-worker.sh --runid=12 JWTFIDF
 run-master.sh --runid=12 JWTFIDF
 run-standalone.sh --runid=13 L2JW | tee -a logs/Expt13-SingleDBLPACM-L2JW.log
-run-worker.sh --runid=13 L2JW 2>&1 | tee -a logs/Expt13-SingleDBLPACM-L2JW.worker.sozopol.log
-run-master.sh --runid=13 L2JW 2>&1 | tee -a logs/Expt13-SingleDBLPACM-L2JW.master.davenport.log
+run-worker.sh --runid=13 L2JW 2>&1 | tee -a logs/Expt13-DistDBLPACM-L2JW.worker.sozopol.log
+run-master.sh --runid=13 L2JW 2>&1 | tee -a logs/Expt13-DistDBLPACM-L2JW.master.davenport.log
