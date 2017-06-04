@@ -1,7 +1,7 @@
 #!/bin/bash
 
 readonly CLASSPATH_FILE='classpath.out'
-readonly TARGET_CLASS='org.linqs.psl.distributed.bibliographicER.DBLPACM'
+readonly TARGET_CLASS='org.linqs.psl.distributed.bibliographicER.CoraUWash'
 
 FETCH_COMMAND=''
 
@@ -80,7 +80,7 @@ function main() {
    check_arguments "$@"
    compile
    buildClasspath
-   run $1 data Similarities.$2.combo-only same_targets.txt same_truth.txt
+   run $1
 }
 
 main "$@"
