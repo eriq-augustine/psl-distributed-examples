@@ -2,6 +2,7 @@
 
 readonly CLASSPATH_FILE='classpath.out'
 readonly TARGET_CLASS='org.linqs.psl.example.Friendship'
+readonly JAVA_OPTIONS='-Xmx25G -Xms25G'
 
 FETCH_COMMAND=''
 
@@ -48,7 +49,7 @@ function buildClasspath() {
 }
 
 function run() {
-   java -cp ./target/classes:$(cat ${CLASSPATH_FILE}) ${TARGET_CLASS} "$@"
+   java ${JAVA_OPTIONS} -cp ./target/classes:$(cat ${CLASSPATH_FILE}) ${TARGET_CLASS} "$@"
    if [[ "$?" -ne 0 ]]; then
       err 'Failed to run'
       exit 60

@@ -255,7 +255,7 @@ public class Friendship {
    /**
     * Take the blocks and assign them to workers.
     */
-   // TODO(eriq): This is super messy.
+   // TODO(eriq): This is super messy. Clean up format?
    private String[][][] computeParitions(Map<String, List<String>> blocks) {
       // [worker][row][col]
       List<List<String[]>> partitions = new ArrayList<List<String[]>>();
@@ -277,10 +277,19 @@ public class Friendship {
          blockRows.add(rows);
       }
 
-      // TODO(eriq): Better, even greedy is better.
-      // Just assign round robin.
-      for (int i = 0; i < blockRows.size(); i++) {
-         partitions.get(i % partitions.size()).addAll(blockRows.get(i));
+      // Just assign greedily.
+      for (int blockIndex = 0; blockIndex < blockRows.size(); blockIndex++) {
+         int minIndex = -1;
+         int minSize = -1;
+
+         for (int partitionIndex = 0; partitionIndex < partitions.size(); partitionIndex++) {
+            if (minSize == -1 || partitions.get(partitionIndex).size() < minSize) {
+               minIndex = partitionIndex;
+               minSize = partitions.get(partitionIndex).size();
+            }
+         }
+
+         partitions.get(minIndex).addAll(blockRows.get(blockIndex));
       }
 
       // Transform for tranmission.
@@ -361,12 +370,16 @@ public class Friendship {
          if (args[i].equals("--help") || args[i].equals("-h")) {
             printUsage();
             System.exit(0);
-         } else if (args[i].equals("--worker")) {
-            cb.setProperty('distributed', true);
-            cb.setProperty('master', false);
+         } else if (args[i].equals("--data")) {
+            // Consume the next argument.
+            i++;
+            cb.setProperty('experiment.data.path', args[i]);
          } else if (args[i].equals("--master")) {
             cb.setProperty('distributed', true);
             cb.setProperty('master', true);
+         } else if (args[i].equals("--worker")) {
+            cb.setProperty('distributed', true);
+            cb.setProperty('master', false);
          } else if (args[i].startsWith("--")) {
             System.err.println("Unknown argument: [" + args[i] + "]");
             printUsage();
@@ -383,8 +396,9 @@ public class Friendship {
       System.out.println("USAGE: java " + Friendship.getClass().getName() + " [OPTIONS] workerAddress ...");
       System.out.println("Options:");
       System.out.println("   --help | -h -- print this prompt and exit");
-      System.out.println("   --worker -- make this instance a worker");
+      System.out.println("   --data <path> -- path to the directory containing the data");
       System.out.println("   --master -- make this instance a master");
+      System.out.println("   --worker -- make this instance a worker");
       System.out.println("");
       System.out.println("All additional values are treated as worker addresses (will be added to 'distributedmpeinference.workers'");
    }
