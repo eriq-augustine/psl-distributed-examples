@@ -49,7 +49,7 @@ function buildClasspath() {
 }
 
 function run() {
-   java ${JAVA_OPTIONS} -cp ./target/classes:$(cat ${CLASSPATH_FILE}) ${TARGET_CLASS} --worker
+   java ${JAVA_OPTIONS} -cp ./target/classes:$(cat ${CLASSPATH_FILE}) ${TARGET_CLASS} --worker "$@"
    if [[ "$?" -ne 0 ]]; then
       err 'Failed to run'
       exit 60
@@ -60,7 +60,7 @@ function main() {
    check_requirements
    compile
    buildClasspath
-   run
+   run "$@"
 }
 
 main "$@"
