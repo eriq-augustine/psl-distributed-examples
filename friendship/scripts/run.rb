@@ -3,6 +3,7 @@ require_relative 'genData'
 
 require 'fileutils'
 require 'open3'
+require 'socket'
 
 START_PEOPLE = 300
 END_PEOPLE = 600
@@ -24,9 +25,7 @@ RUN_MASTER = 'master'
 
 INFER_OUTPUT_PATH = File.join('.', 'output', 'friends_infer.txt')
 
-# TEST
-# MASTER_SLEEP_TIME_SEC = 60
-MASTER_SLEEP_TIME_SEC = 5
+MASTER_SLEEP_TIME_SEC = 60
 
 def ensureData(people, locations)
    return GenData.main(['--people', "#{people}", '--locations', "#{locations}"])
@@ -57,7 +56,7 @@ def runStandalone(people, locations, dataPath)
       '--data', dataPath
    ]
 
-   runBase(args, dataPath, RUN_STANDALONE)
+   runBase(args, dataPath, "#{RUN_STANDALONE}_#{Socket.gethostname()}")
 end
 
 def runWorker(people, locations, dataPath, numWorkers)
@@ -66,7 +65,7 @@ def runWorker(people, locations, dataPath, numWorkers)
       '--data', dataPath
    ]
 
-   runBase(args, dataPath, "#{RUN_WORKER}_#{numWorkers}")
+   runBase(args, dataPath, "#{RUN_WORKER}_#{numWorkers}_#{Socket.gethostname()}")
 end
 
 def runMaster(people, locations, dataPath, workers)
@@ -79,7 +78,7 @@ def runMaster(people, locations, dataPath, workers)
    # The master needs to sleep a bit to make sure that the workers are ready.
    sleep(MASTER_SLEEP_TIME_SEC)
 
-   outDir = runBase(args, dataPath, RUN_MASTER)
+   outDir = runBase(args, dataPath, "#{RUN_MASTER}_#{workers.size()}_#{Socket.gethostname()}")
 
    # Move the output inference.
    FileUtils.mv(INFER_OUTPUT_PATH, outDir)
