@@ -136,11 +136,11 @@ module GenData
 
    # Return the directory the data is in.
    def GenData.genData(options)
-      dataDir = File.join(DATA_BASE_DIR, "#{options['name']}_#{options['people']}_#{options['locations']}")
+      dataDir = File.join(DATA_BASE_DIR, "#{options['name']}_#{'%04d' % options['people']}_#{'%04d' % options['locations']}")
 
       if (File.exists?(dataDir))
          puts "Data directory (#{dataDir}) already exists, skipping generation."
-         return
+         return dataDir
       end
 
       random = Random.new(options['seed'])
