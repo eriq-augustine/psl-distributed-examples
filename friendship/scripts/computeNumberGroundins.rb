@@ -19,13 +19,13 @@ module ComputeNumberGroundins
    end
 
    def ComputeNumberGroundins.main(args)
-      startPeople = 75
-      endPeople = 750
-      peopleIncrement = 75
+      startPeople = 200
+      endPeople = 600
+      peopleIncrement = 100
 
-      startLocations = 5
+      startLocations = 10
       endLocations = 30
-      locationsIncrement = 5
+      locationsIncrement = 10
 
       people = startPeople
       while (people <= endPeople)

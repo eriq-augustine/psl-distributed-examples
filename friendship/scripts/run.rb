@@ -5,7 +5,7 @@ require 'fileutils'
 require 'open3'
 require 'socket'
 
-START_PEOPLE = 300
+START_PEOPLE = 200
 END_PEOPLE = 600
 PEOPLE_INCREMENT = 100
 
