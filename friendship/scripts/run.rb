@@ -80,8 +80,10 @@ def runMaster(people, locations, dataPath, workers)
 
    outDir = runBase(args, dataPath, "#{RUN_MASTER}_#{workers.size()}_#{Socket.gethostname()}")
 
-   # Move the output inference.
-   FileUtils.mv(INFER_OUTPUT_PATH, outDir)
+   # Move the output inference, if it exists.
+   if (File.exists?(INFER_OUTPUT_PATH))
+      FileUtils.mv(INFER_OUTPUT_PATH, outDir)
+   end
 end
 
 def run(command, outFile=nil, errFile=nil)

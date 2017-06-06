@@ -346,7 +346,9 @@ public class Friendship {
       runInference(obsPartition, targetsPartition);
 
       if (!config.distributed || config.master) {
-         writeOutput(targetsPartition);
+         // Takes too much time/memory for large experiments.
+         // writeOutput(targetsPartition);
+
          evalResults(targetsPartition, truthPartition);
       }
 
