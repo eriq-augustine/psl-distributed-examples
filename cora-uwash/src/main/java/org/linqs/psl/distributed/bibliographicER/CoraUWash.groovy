@@ -109,7 +109,7 @@ public class CoraUWash  {
 	public CoraUWash(ConfigBundle cb) {
 		log = LoggerFactory.getLogger(this.class);
 		config = new PSLConfig(cb);
-		ds = new RDBMSDataStore(new H2DatabaseDriver(Type.Disk, Paths.get(config.dbPath, ID).toString(), true), cb);
+		ds = new RDBMSDataStore(new H2DatabaseDriver(Type.Disk, Paths.get(config.dbPath, ID+"-exp"+config.runid).toString(), true), cb);
 		model = new PSLModel(this, ds);
 	}
 
