@@ -22,8 +22,9 @@ import org.linqs.psl.model.term.ConstantType;
 import org.linqs.psl.utils.dataloading.InserterUtils;
 import org.linqs.psl.utils.evaluation.printing.AtomPrintStream;
 import org.linqs.psl.utils.evaluation.printing.DefaultAtomPrintStream;
-import org.linqs.psl.utils.evaluation.statistics.QuickPredictionComparator;
-import org.linqs.psl.utils.evaluation.statistics.QuickPredictionStatistics;
+import org.linqs.psl.utils.evaluation.statistics.ContinuousPredictionComparator;
+import org.linqs.psl.utils.evaluation.statistics.DiscretePredictionComparator;
+import org.linqs.psl.utils.evaluation.statistics.DiscretePredictionStatistics;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -302,39 +303,44 @@ public class CoraUWash  {
 	private void evalResults(Partition targetsPartition, Partition truthPartition) {
 		Database resultsDB = ds.getDatabase(targetsPartition, [SamePub,SameAuthor] as Set);
 		Database truthDB = ds.getDatabase(truthPartition, [SamePub,SameAuthor] as Set);
-
-		QuickPredictionComparator qpc = new QuickPredictionComparator(resultsDB);
-		qpc.setBaseline(truthDB);
+		DiscretePredictionComparator dpc = new DiscretePredictionComparator(resultsDB);
+		ContinuousPredictionComparator cpc = new ContinuousPredictionComparator(resultsDB);
+		dpc.setBaseline(truthDB);
+		//	 dpc.setThreshold(0.99);
+		cpc.setBaseline(truthDB);
 
         //Compare for author
-		QuickPredictionStatistics stats = qpc.compare(SameAuthor);
+		DiscretePredictionStatistics stats = dpc.compare(SameAuthor);
+		double mse = cpc.compare(SameAuthor);
         log.info("Stats for Author");
-		log.info("MSE: {}", stats.getContinuousMetricScore());
+		log.info("MSE: {}", mse);
 		log.info("Accuracy {}, Error {}",stats.getAccuracy(), stats.getError());
 		log.info(
 				"Positive Class: precision {}, recall {}",
-				stats.getPrecision(QuickPredictionStatistics.BinaryClass.POSITIVE),
-				stats.getRecall(QuickPredictionStatistics.BinaryClass.POSITIVE));
+				stats.getPrecision(DiscretePredictionStatistics.BinaryClass.POSITIVE),
+				stats.getRecall(DiscretePredictionStatistics.BinaryClass.POSITIVE));
 		log.info("Negative Class Stats: precision {}, recall {}",
-				stats.getPrecision(QuickPredictionStatistics.BinaryClass.NEGATIVE),
-				stats.getRecall(QuickPredictionStatistics.BinaryClass.NEGATIVE));
+				stats.getPrecision(DiscretePredictionStatistics.BinaryClass.NEGATIVE),
+				stats.getRecall(DiscretePredictionStatistics.BinaryClass.NEGATIVE));
 
         //Compare for publications
-		stats = qpc.compare(SamePub);
+		stats = dpc.compare(SamePub);
+		mse = cpc.compare(SamePub);
         log.info("Stats for Publications");
-		log.info("MSE: {}", stats.getContinuousMetricScore());
+		log.info("MSE: {}", mse);
 		log.info("Accuracy {}, Error {}",stats.getAccuracy(), stats.getError());
 		log.info(
 				"Positive Class: precision {}, recall {}",
-				stats.getPrecision(QuickPredictionStatistics.BinaryClass.POSITIVE),
-				stats.getRecall(QuickPredictionStatistics.BinaryClass.POSITIVE));
+				stats.getPrecision(DiscretePredictionStatistics.BinaryClass.POSITIVE),
+				stats.getRecall(DiscretePredictionStatistics.BinaryClass.POSITIVE));
 		log.info("Negative Class Stats: precision {}, recall {}",
-				stats.getPrecision(QuickPredictionStatistics.BinaryClass.NEGATIVE),
-				stats.getRecall(QuickPredictionStatistics.BinaryClass.NEGATIVE));
+				stats.getPrecision(DiscretePredictionStatistics.BinaryClass.NEGATIVE),
+				stats.getRecall(DiscretePredictionStatistics.BinaryClass.NEGATIVE));
 
 		resultsDB.close();
 		truthDB.close();
 	}
+
 
    /**
     * Take the blocks and assign them to workers.
@@ -410,8 +416,8 @@ public class CoraUWash  {
 		runInference(obsPartition, targetsPartition);
 
 		if (!config.distributed || config.master) {
-         writeOutput(targetsPartition);
-         evalResults(targetsPartition, truthPartition);
+           writeOutput(targetsPartition);
+           evalResults(targetsPartition, truthPartition);
       }
 
 		ds.close();
