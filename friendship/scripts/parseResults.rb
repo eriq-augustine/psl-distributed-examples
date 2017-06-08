@@ -26,9 +26,13 @@ def parseStandalone(path)
       file.each{|line|
          line.strip()
 
-         if (match = line.match(/Stats -- Memory \(Bytes\): (\d+)/))
+         if (match = line.match(/Stats -- Memory \(Bytes\): (\d+), Terms: (\d+), Global Variables: (\d+) Local Variables: (\d+)/))
             masterStats['memory'] = match[1].to_i() / BYTES_PER_MEGABYTE
             workerStats['memory'] = match[1].to_i() / BYTES_PER_MEGABYTE
+
+            workerStats["terms"] = match[2].to_i()
+            workerStats['globalVars'] = match[3].to_i()
+            workerStats['localVars'] = match[4].to_i()
          elsif (match = line.match(/^(\d+) .* - Beginning inference\.$/))
             inferenceStartTimeMS = match[1].to_i()
          elsif (match = line.match(/^(\d+) .* - Inference complete. Writing results to Database\.$/))
@@ -44,14 +48,9 @@ def parseStandalone(path)
          elsif (match = line.match(/^(\d+) .* - Generated (\d+) objective terms from /))
             termGenEndTimeMS = match[1].to_i()
             workerStats['termGen'] = termGenEndTimeMS - termGenStartTimeMS
-            workerStats["terms"] = match[2].to_i()
-         elsif (match = line.match(/^(\d+) .* - Performing optimization with (\d+) variables and /))
-            workerStats['globalVars'] = match[2].to_i()
          end
       }
    }
-
-   workerStats['localVars'] = -1
 
    return masterStats, workerStats
 end
