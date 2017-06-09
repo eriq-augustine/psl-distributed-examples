@@ -68,7 +68,7 @@ function buildClasspath() {
 
 function run() {
    echo "$@"
-   java -cp ./target/classes:$(cat ${CLASSPATH_FILE}) ${TARGET_CLASS} "$@"
+   java -Xms15G -Xmx30G -cp ./target/classes:$(cat ${CLASSPATH_FILE}) ${TARGET_CLASS} "$@"
    if [[ "$?" -ne 0 ]]; then
       err 'Failed to run'
       exit 60
