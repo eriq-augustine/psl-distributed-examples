@@ -407,7 +407,7 @@ public class CoraUWash  {
 
 		definePredicates();
 		defineRules();
-		loadData(obsPartition, targetsPartition, truthPartition);
+		//loadData(obsPartition, targetsPartition, truthPartition);
 		runInference(obsPartition, targetsPartition);
 
 		//TEST: REMEMBER TO UNCOMMENT IF YOUR RUNS AREN'T 3 DAYS FROM THE SUBMISSION DEADLINE
