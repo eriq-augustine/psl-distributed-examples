@@ -89,7 +89,7 @@ public class CoraUWash  {
 			dataPath = cb.getString('experiment.data.path', 'data');
 			outputPath = cb.getString('experiment.output.outputdir', 'output');
 
-			runid = cb.getString('runid','0');
+			runid = cb.getString('experiment.runid','0');
 
 			weightMap["SimilarTitles"] = cb.getInteger('model.weights.similarTitles', weightMap["SimilarTitles"]);
 			weightMap["SimilarName"] = cb.getInteger('model.weights.similarNames', weightMap["SimilarNames"]);
