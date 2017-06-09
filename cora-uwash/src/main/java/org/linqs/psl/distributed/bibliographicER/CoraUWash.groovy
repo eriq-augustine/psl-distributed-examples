@@ -89,7 +89,7 @@ public class CoraUWash  {
 			dataPath = cb.getString('experiment.data.path', 'data');
 			outputPath = cb.getString('experiment.output.outputdir', 'output');
 
-			runid = cb.getString('runid','0');
+			runid = cb.getString('experiment.runid','0');
 
 			weightMap["SimilarTitles"] = cb.getInteger('model.weights.similarTitles', weightMap["SimilarTitles"]);
 			weightMap["SimilarName"] = cb.getInteger('model.weights.similarNames', weightMap["SimilarNames"]);
@@ -109,7 +109,7 @@ public class CoraUWash  {
 	public CoraUWash(ConfigBundle cb) {
 		log = LoggerFactory.getLogger(this.class);
 		config = new PSLConfig(cb);
-		ds = new RDBMSDataStore(new H2DatabaseDriver(Type.Disk, Paths.get(config.dbPath, ID+"-exp"+config.runid).toString(), true), cb);
+		ds = new RDBMSDataStore(new H2DatabaseDriver(Type.Disk, Paths.get(config.dbPath, ID+"-exp"+config.runid).toString(), false), cb);
 		model = new PSLModel(this, ds);
 	}
 
@@ -206,39 +206,39 @@ public class CoraUWash  {
 		log.info("Loading data into database");
 
 		Inserter inserter = ds.getInserter(HaveSimilarTitles, obsPartition);
-		InserterUtils.loadDelimitedDataTruth(inserter, Paths.get(config.dataPath, "HaveSimilarTitles.txt").toString());
+		//InserterUtils.loadDelimitedDataTruth(inserter, Paths.get(config.dataPath, "HaveSimilarTitles.txt").toString());
 
         if (!config.distributed){
     		inserter = ds.getInserter(BlocksAuthors, obsPartition);
-	    	InserterUtils.loadDelimitedData(inserter, Paths.get(config.dataPath, "BlocksAuthors.txt").toString());
+	    	//InserterUtils.loadDelimitedData(inserter, Paths.get(config.dataPath, "BlocksAuthors.txt").toString());
         }
 
 		inserter = ds.getInserter(BlocksPubs, obsPartition);
-		InserterUtils.loadDelimitedData(inserter, Paths.get(config.dataPath, "BlocksPubs.txt").toString());
+		//InserterUtils.loadDelimitedData(inserter, Paths.get(config.dataPath, "BlocksPubs.txt").toString());
 
 		inserter = ds.getInserter(HaveSimilarNames, obsPartition);
-		InserterUtils.loadDelimitedDataTruth(inserter, Paths.get(config.dataPath, "HaveSimilarNames.txt").toString());
+		//InserterUtils.loadDelimitedDataTruth(inserter, Paths.get(config.dataPath, "HaveSimilarNames.txt").toString());
 
 		inserter = ds.getInserter(HaveSimilarAuthors, obsPartition);
-		InserterUtils.loadDelimitedDataTruth(inserter, Paths.get(config.dataPath, "HaveSimilarAuthors.txt").toString());
+		//InserterUtils.loadDelimitedDataTruth(inserter, Paths.get(config.dataPath, "HaveSimilarAuthors.txt").toString());
 
 		inserter = ds.getInserter(AreCoAuthors, obsPartition);
-		InserterUtils.loadDelimitedData(inserter, Paths.get(config.dataPath, "AreCoAuthors.txt").toString());
+		//InserterUtils.loadDelimitedData(inserter, Paths.get(config.dataPath, "AreCoAuthors.txt").toString());
 
 		inserter = ds.getInserter(HasAuthor, obsPartition);
-		InserterUtils.loadDelimitedData(inserter, Paths.get(config.dataPath, "HasAuthor.txt").toString());
+		//InserterUtils.loadDelimitedData(inserter, Paths.get(config.dataPath, "HasAuthor.txt").toString());
 
 		inserter = ds.getInserter(SamePub, targetsPartition);
-		InserterUtils.loadDelimitedData(inserter, Paths.get(config.dataPath, "SamePub.target.txt").toString());
+		//InserterUtils.loadDelimitedData(inserter, Paths.get(config.dataPath, "SamePub.target.txt").toString());
 
 		inserter = ds.getInserter(SamePub, truthPartition);
-		InserterUtils.loadDelimitedDataTruth(inserter, Paths.get(config.dataPath, "SamePub.truth.txt").toString());
+		//InserterUtils.loadDelimitedDataTruth(inserter, Paths.get(config.dataPath, "SamePub.truth.txt").toString());
 
 		inserter = ds.getInserter(SameAuthor, targetsPartition);
-		InserterUtils.loadDelimitedData(inserter, Paths.get(config.dataPath, "SameAuthor.target.txt").toString());
+		//InserterUtils.loadDelimitedData(inserter, Paths.get(config.dataPath, "SameAuthor.target.txt").toString());
 
 		inserter = ds.getInserter(SameAuthor, truthPartition);
-		InserterUtils.loadDelimitedDataTruth(inserter, Paths.get(config.dataPath, "SameAuthor.truth.txt").toString());
+		//InserterUtils.loadDelimitedDataTruth(inserter, Paths.get(config.dataPath, "SameAuthor.truth.txt").toString());
 
 	}
 
@@ -410,10 +410,11 @@ public class CoraUWash  {
 		loadData(obsPartition, targetsPartition, truthPartition);
 		runInference(obsPartition, targetsPartition);
 
-		if (!config.distributed || config.master) {
-         writeOutput(targetsPartition);
-         evalResults(targetsPartition, truthPartition);
-      }
+		//TEST: REMEMBER TO UNCOMMENT IF YOUR RUNS AREN'T 3 DAYS FROM THE SUBMISSION DEADLINE
+		//if (!config.distributed || config.master) {
+         //writeOutput(targetsPartition);
+         //evalResults(targetsPartition, truthPartition);
+      //}
 
 		ds.close();
 	}
