@@ -1,3 +1,0 @@
-# We want this directory to exist, but not commit any other files that live in it.
-*
-!.gitignore
