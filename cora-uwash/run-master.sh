@@ -68,7 +68,9 @@ function buildClasspath() {
 
 function run() {
    echo "$@"
-   java -Xms80G -Xmx120G -cp ./target/classes:$(cat ${CLASSPATH_FILE}) ${TARGET_CLASS} "$@"
+   # TODO: At this point, this script has lost some generality...
+   # It has gone from taking arbitrary cmd args to very specific args. Change this.
+   java $3 $4 -cp ./target/classes:$(cat ${CLASSPATH_FILE}) ${TARGET_CLASS} $1 $2
    if [[ "$?" -ne 0 ]]; then
       err 'Failed to run'
       exit 60

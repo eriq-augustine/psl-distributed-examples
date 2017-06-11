@@ -10,3 +10,14 @@ run-master.sh --runid=dontcare
 run-standalone.sh --runid=13 | tee -a logs/Expt13-SingleCoraUWash.log
 run-worker.sh --runid=13 2>&1 | tee -a logs/Expt13-DistCoraUWash.worker.sozopol.log
 run-master.sh --runid=13 2>&1 | tee -a logs/Expt13-DistCoraUWash.master.davenport.log
+
+Memory:
+kish -Xms15G -Xmx30G
+pampelonne -Xms15G -Xmx30G
+ibi -Xms15G -Xmx30G
+pebble -Xms15G -Xmx30G
+sozopol -Xms80G -Xmx120G
+moss -Xms80G -Xmx120G
+davenport -Xms40G -Xmx45G
+lighthouse -Xms200G -Xmx380G
+twinlakes -Xms200G -Xmx380G
