@@ -109,7 +109,7 @@ public class CoraUWash  {
 	public CoraUWash(ConfigBundle cb) {
 		log = LoggerFactory.getLogger(this.class);
 		config = new PSLConfig(cb);
-		ds = new RDBMSDataStore(new H2DatabaseDriver(Type.Disk, Paths.get(config.dbPath, ID+"-exp"+config.runid).toString(), true), cb);
+		ds = new RDBMSDataStore(new H2DatabaseDriver(Type.Disk, Paths.get(config.dbPath, ID+"-exp"+config.runid).toString(), false), cb);
 		model = new PSLModel(this, ds);
 	}
 
@@ -165,11 +165,11 @@ public class CoraUWash  {
 		);
 
 		if (config.useTransitivityRule) {
-			model.add(
-				rule: ( SamePub(P1,P2) & SamePub(P2,P3) & (P1-P3) & BlocksPubs(P1,B) & BlocksPubs(P2,B) & BlocksPubs(P3,B)) >> SamePub(P1,P3),
-				squared: config.sqPotentials,
-				weight : config.weightMap["Transitivity"]
-			);
+			//model.add(
+			//	rule: ( SamePub(P1,P2) & SamePub(P2,P3) & (P1-P3) & BlocksPubs(P1,B) & BlocksPubs(P2,B) & BlocksPubs(P3,B)) >> SamePub(P1,P3),
+			//	squared: config.sqPotentials,
+			//	weight : config.weightMap["Transitivity"]
+			//);
 
 			model.add(
 				rule: ( SameAuthor(A1,A2) & SameAuthor(A2,A3) & (A1-A3) & BlocksAuthors(A1,B) & BlocksAuthors(A2,B) & BlocksAuthors(A3,B)) >> SameAuthor(A1,A3),
@@ -362,10 +362,19 @@ public class CoraUWash  {
          blockRows.add(rows);
       }
 
-      // TODO(eriq): Better, even greedy is better.
-      // Just assign round robin.
-      for (int i = 0; i < blockRows.size(); i++) {
-         partitions.get(i % partitions.size()).addAll(blockRows.get(i));
+      // Just assign greedily.
+      for (int blockIndex = 0; blockIndex < blockRows.size(); blockIndex++) {
+         int minIndex = -1;
+         int minSize = -1;
+
+         for (int partitionIndex = 0; partitionIndex < partitions.size(); partitionIndex++) {
+            if (minSize == -1 || partitions.get(partitionIndex).size() < minSize) {
+               minIndex = partitionIndex;
+               minSize = partitions.get(partitionIndex).size();
+            }
+         }
+
+         partitions.get(minIndex).addAll(blockRows.get(blockIndex));
       }
 
       // Transform for tranmission.
@@ -407,7 +416,7 @@ public class CoraUWash  {
 
 		definePredicates();
 		defineRules();
-		loadData(obsPartition, targetsPartition, truthPartition);
+		//loadData(obsPartition, targetsPartition, truthPartition);
 		runInference(obsPartition, targetsPartition);
 
 		//TEST: REMEMBER TO UNCOMMENT IF YOUR RUNS AREN'T 3 DAYS FROM THE SUBMISSION DEADLINE
