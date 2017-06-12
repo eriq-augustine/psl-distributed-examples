@@ -105,7 +105,7 @@ def parseMaster(path)
             stats['memory'] = match[1].to_i() / BYTES_PER_MEGABYTE
          elsif (match = line.match(/^(\d+) .* - Beginning inference\.$/))
             inferenceStartTimeMS = match[1].to_i()
-         elsif (match = line.match(/^(\d+) .* - Inference complete. Writing results to Database\.$/))
+         elsif (match = line.match(/^(\d+) .* - Writing results to database\.$/))
             inferenceEndTimeMS = match[1].to_i()
             stats['inference'] = inferenceEndTimeMS - inferenceStartTimeMS
          end
