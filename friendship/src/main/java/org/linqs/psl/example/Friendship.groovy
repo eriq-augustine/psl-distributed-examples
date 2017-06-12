@@ -1,5 +1,9 @@
 package org.linqs.psl.example;
 
+// HACK(eriq)
+import org.linqs.psl.hack.VeryQuickPredictionComparator;
+import org.linqs.psl.hack.VeryQuickPredictionStatistics;
+
 import org.linqs.psl.application.inference.MPEInference;
 import org.linqs.psl.application.inference.distributed.DistributedMPEInferenceMaster;
 import org.linqs.psl.application.inference.distributed.DistributedMPEInferenceWorker;
@@ -177,23 +181,24 @@ public class Friendship {
    /**
     * Run inference to infer the unknown Knows relationships between people.
     */
-   private void runInference(Partition obsPartition, Partition targetsPartition) {
+   private Map<String, Double> runInference(Partition obsPartition, Partition targetsPartition) {
       log.info("Starting inference");
 
+      Map<String, Double> result = null;
       Date infStart = new Date();
       HashSet closed = new HashSet<StandardPredicate>([Lived, Likes]);
 
       if (!config.distributed) {
          Database inferDB = ds.getDatabase(targetsPartition, closed, obsPartition);
          MPEInference mpe = new MPEInference(model, inferDB, config.cb);
-         mpe.mpeInference();
+         result = mpe.mpeInferenceHack();
          mpe.close();
          inferDB.close();
       } else {
          if (config.master) {
             Database inferDB = ds.getDatabase(targetsPartition, closed, obsPartition);
             DistributedMPEInferenceMaster mpe = new DistributedMPEInferenceMaster(model, inferDB, config.cb);
-            mpe.mpeInference(obsPartition.getName(), Block.getName(), computeParitions(computeBlocks()));
+            result = mpe.mpeInferenceHack(obsPartition.getName(), Block.getName(), computeParitions(computeBlocks()));
             mpe.close();
             inferDB.close();
          } else {
@@ -204,6 +209,7 @@ public class Friendship {
       }
 
       log.info("Finished inference in {}", TimeCategory.minus(new Date(), infStart));
+      return result;
    }
 
    /**
@@ -227,27 +233,27 @@ public class Friendship {
     * Run statistical evaluation scripts to determine the quality of the inferences
     * relative to the defined truth.
     */
-   private void evalResults(Partition targetsPartition, Partition truthPartition) {
-      Database resultsDB = ds.getDatabase(targetsPartition, [Friends] as Set);
+   private void evalResults(Partition targetsPartition, Partition truthPartition, Map<String, Double> results) {
       Database truthDB = ds.getDatabase(truthPartition, [Friends] as Set);
 
-      QuickPredictionComparator qpc = new QuickPredictionComparator(resultsDB);
+      log.info("Beginning Evaluation");
+
+      VeryQuickPredictionComparator qpc = new VeryQuickPredictionComparator(results);
       qpc.setBaseline(truthDB);
-      QuickPredictionStatistics stats = qpc.compare(Friends);
+      VeryQuickPredictionStatistics stats = qpc.compare(Friends);
 
       log.info("MSE: {}", stats.getContinuousMetricScore());
       log.info("Accuracy {}, Error {}", stats.getAccuracy(), stats.getError());
 
       log.info(
             "Positive Class: precision {}, recall {}",
-            stats.getPrecision(QuickPredictionStatistics.BinaryClass.POSITIVE),
-            stats.getRecall(QuickPredictionStatistics.BinaryClass.POSITIVE));
+            stats.getPrecision(VeryQuickPredictionStatistics.BinaryClass.POSITIVE),
+            stats.getRecall(VeryQuickPredictionStatistics.BinaryClass.POSITIVE));
 
       log.info("Negative Class Stats: precision {}, recall {}",
-            stats.getPrecision(QuickPredictionStatistics.BinaryClass.NEGATIVE),
-            stats.getRecall(QuickPredictionStatistics.BinaryClass.NEGATIVE));
+            stats.getPrecision(VeryQuickPredictionStatistics.BinaryClass.NEGATIVE),
+            stats.getRecall(VeryQuickPredictionStatistics.BinaryClass.NEGATIVE));
 
-      resultsDB.close();
       truthDB.close();
    }
 
@@ -343,13 +349,13 @@ public class Friendship {
       definePredicates();
       defineRules();
       loadData(obsPartition, targetsPartition, truthPartition);
-      runInference(obsPartition, targetsPartition);
+      Map<String, Double> results = runInference(obsPartition, targetsPartition);
 
       if (!config.distributed || config.master) {
          // Takes too much time/memory for large experiments.
          // writeOutput(targetsPartition);
 
-         evalResults(targetsPartition, truthPartition);
+         evalResults(targetsPartition, truthPartition, results);
       }
 
       ds.close();
