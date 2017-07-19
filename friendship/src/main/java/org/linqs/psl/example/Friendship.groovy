@@ -26,8 +26,6 @@ import org.linqs.psl.model.term.ConstantType;
 import org.linqs.psl.utils.dataloading.InserterUtils;
 import org.linqs.psl.utils.evaluation.printing.AtomPrintStream;
 import org.linqs.psl.utils.evaluation.printing.DefaultAtomPrintStream;
-import org.linqs.psl.utils.evaluation.statistics.QuickPredictionComparator;
-import org.linqs.psl.utils.evaluation.statistics.QuickPredictionStatistics;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
